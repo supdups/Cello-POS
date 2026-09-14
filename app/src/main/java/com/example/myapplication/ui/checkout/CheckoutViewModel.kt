@@ -18,7 +18,8 @@ sealed class CheckoutState {
 }
 
 class CheckoutViewModel(
-    private val repository: OrderRepository
+    private val repository: OrderRepository,
+    private val printer: ReceiptPrinter
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<CheckoutState>(CheckoutState.Idle)
@@ -27,21 +28,28 @@ class CheckoutViewModel(
     fun completeOrder(total: Double, paymentType: String) {
         viewModelScope.launch {
             _uiState.value = CheckoutState.Processing
+
+            // Cash orders save immediately (offline-friendly).
+            // Card orders would call a payment gateway SDK here before saving — left as a TODO
+            // since it depends on which gateway/hardware you pick.
             val order = Order(total = total, paymentType = paymentType)
             repository.saveOrderLocally(order)
+
+            printer.printReceipt(total, paymentType)
+
             _uiState.value = CheckoutState.Success
         }
     }
 
-    /**
-     * Manual factory since Hilt isn't wired up yet.
-     * We'll replace this with @HiltViewModel once dependency injection is added.
-     */
+    fun reset() {
+        _uiState.value = CheckoutState.Idle
+    }
+
     class Factory(private val context: Context) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             val dao = AppDatabase.getInstance(context).orderDao()
             @Suppress("UNCHECKED_CAST")
-            return CheckoutViewModel(OrderRepository(dao)) as T
+            return CheckoutViewModel(OrderRepository(dao), StubReceiptPrinter()) as T
         }
     }
 }

@@ -2,12 +2,16 @@
 <project version="4">
   <component name="deploymentTargetSelector">
     <selectionStates>
+      <SelectionState runConfigName="cello-pos">
+        <option name="selectionMode" value="DROPDOWN" />
+        <DialogSelection />
+      </SelectionState>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-09-11T08:39:27.807931800Z">
+        <DropdownSelection timestamp="2026-09-14T16:01:50.063523Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\pc\.android\avd\Pixel_4.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\pc\.android\avd\Medium_Tablet.avd" />
             </handle>
           </Target>
         </DropdownSelection>

@@ -4,22 +4,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.ui.checkout.CheckoutScreen
+import com.example.myapplication.ui.login.LoginScreen
+import com.example.myapplication.ui.order.OrderScreen
+import com.example.myapplication.ui.order.OrderViewModel
 import com.example.myapplication.ui.theme.MyApplicationTheme
+
+/**
+ * The whole app flow is driven by a single screen enum, kept in MainActivity.
+ * No navigation library — this is intentionally the simplest thing that works
+ * for three screens. Revisit with Navigation-Compose if the flow grows a lot.
+ */
+enum class AppScreen { LOGIN, ORDER, CHECKOUT }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,64 +30,37 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyApplicationTheme {
-                MyApplicationApp()
+                CelloPosApp()
             }
         }
     }
 }
 
-@PreviewScreenSizes
 @Composable
-fun MyApplicationApp() {
-    var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+fun CelloPosApp() {
+    var screen by rememberSaveable { mutableStateOf(AppScreen.LOGIN) }
+    var checkoutTotal by rememberSaveable { mutableDoubleStateOf(0.0) }
+    val orderViewModel: OrderViewModel = viewModel()
 
-    NavigationSuiteScaffold(
-        navigationSuiteItems = {
-            AppDestinations.entries.forEach {
-                item(
-                    icon = {
-                        Icon(
-                            painterResource(it.icon),
-                            contentDescription = it.label
-                        )
-                    },
-                    label = { Text(it.label) },
-                    selected = it == currentDestination,
-                    onClick = { currentDestination = it }
-                )
+    when (screen) {
+        AppScreen.LOGIN -> LoginScreen(
+            onLoginSuccess = { screen = AppScreen.ORDER }
+        )
+
+        AppScreen.ORDER -> OrderScreen(
+            viewModel = orderViewModel,
+            onCheckout = { total ->
+                checkoutTotal = total
+                screen = AppScreen.CHECKOUT
             }
-        }
-    ) {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Greeting(
-                name = "Android",
-                modifier = Modifier.padding(innerPadding)
-            )
-        }
-    }
-}
+        )
 
-enum class AppDestinations(
-    val label: String,
-    val icon: Int,
-) {
-    HOME("Home", R.drawable.ic_home),
-    FAVORITES("Favorites", R.drawable.ic_favorite),
-    PROFILE("Profile", R.drawable.ic_account_box),
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MyApplicationTheme {
-        Greeting("User")
+        AppScreen.CHECKOUT -> CheckoutScreen(
+            total = checkoutTotal,
+            onOrderComplete = {
+                orderViewModel.clearCart()
+                screen = AppScreen.ORDER
+            }
+        )
     }
 }
