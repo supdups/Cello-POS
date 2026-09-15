@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun CheckoutScreen(
     total: Double,
+    lines: List<ReceiptLine>,
     onOrderComplete: () -> Unit,
     viewModel: CheckoutViewModel = viewModel(
         factory = CheckoutViewModel.Factory(LocalContext.current)
@@ -66,14 +67,14 @@ fun CheckoutScreen(
                 )
 
                 Button(
-                    onClick = { viewModel.completeOrder(total, "cash") },
+                    onClick = { viewModel.completeOrder(lines, total, "cash") },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Pay with Cash")
                 }
 
                 OutlinedButton(
-                    onClick = { viewModel.completeOrder(total, "card") },
+                    onClick = { viewModel.completeOrder(lines, total, "card") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 12.dp)

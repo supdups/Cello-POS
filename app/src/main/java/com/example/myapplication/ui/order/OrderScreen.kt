@@ -14,27 +14,50 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myapplication.ui.checkout.ReceiptLine
 
 @Composable
 fun OrderScreen(
-    onCheckout: (total: Double) -> Unit,
-    viewModel: OrderViewModel = viewModel()
+    onCheckout: (total: Double, lines: List<ReceiptLine>) -> Unit,
+    isAdmin: Boolean = false,
+    onManageUsers: () -> Unit = {},
+    onManageItems: () -> Unit = {},
+    onPrinterSettings: () -> Unit = {},
+    onLogout: () -> Unit = {},
+    viewModel: OrderViewModel = viewModel(factory = OrderViewModel.Factory(LocalContext.current))
 ) {
     val state by viewModel.uiState.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Text(
-            text = "Menu",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(16.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Menu",
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Row {
+                if (isAdmin) {
+                    TextButton(onClick = onManageItems) { Text("Manage Items") }
+                    TextButton(onClick = onManageUsers) { Text("Manage Users") }
+                }
+                TextButton(onClick = onPrinterSettings) { Text("Printer") }
+                TextButton(onClick = onLogout) { Text("Logout") }
+            }
+        }
 
         LazyColumn(modifier = Modifier.weight(1f)) {
             items(state.menu) { product ->
@@ -85,7 +108,13 @@ fun OrderScreen(
             }
 
             Button(
-                onClick = { onCheckout(state.total) },
+                onClick = {
+                    val lines = state.cart.map { (productId, qty) ->
+                        val product = state.menu.first { it.id == productId }
+                        ReceiptLine(name = product.name, quantity = qty, price = product.price)
+                    }
+                    onCheckout(state.total, lines)
+                },
                 enabled = state.cart.isNotEmpty(),
                 modifier = Modifier
                     .fillMaxWidth()

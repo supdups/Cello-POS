@@ -13,7 +13,7 @@ interface OrderDao {
     suspend fun insert(order: Order): Long
 
     @Update
-    suspend fun update(order: Order): Unit
+    suspend fun update(order: Order)
 
     @Query("SELECT * FROM orders WHERE synced = 0")
     suspend fun getUnsyncedOrders(): List<Order>
